@@ -1,16 +1,20 @@
+/* eslint-disable import/no-extraneous-dependencies */
+require("dotenv").config();
+
 const Hapi = require("@hapi/hapi");
 const albums = require("./api/albums");
 const songs = require("./api/songs");
-const AlbumsService = require("./services/inMemory/AlbumsService");
-const SongsService = require("./services/inMemory/MusicsService");
+const AlbumsService = require("./services/postgres/AlbumsService");
+const SongsService = require("./services/postgres/SongsService");
 const { AlbumsValidator, SongsValidator } = require("./validator/musics");
+const ClientError = require("./exceptions/ClientError");
 
 const init = async () => {
   const albumsService = new AlbumsService();
   const songsService = new SongsService();
   const server = Hapi.server({
-    port: 5000,
-    host: process.env.NODE_ENV !== "production" ? "localhost" : "0.0.0.0",
+    port: process.env.PORT,
+    host: process.env.HOST,
     routes: {
       cors: {
         origin: ["*"],
@@ -32,6 +36,32 @@ const init = async () => {
       service: songsService,
       validator: SongsValidator,
     },
+  });
+
+  server.ext("onPreResponse", (request, h) => {
+    const { response } = request;
+    if (response instanceof Error) {
+      if (response instanceof ClientError) {
+        const newResponse = h.response({
+          status: "fail",
+          message: response.message,
+        });
+        newResponse.code(response.statusCode);
+        return newResponse;
+      }
+
+      if (!response.isServer) {
+        return h.continue;
+      }
+      const newResponse = h.response({
+        status: "error",
+        message: "Terjadi kegagalan pada server kami",
+      });
+      newResponse.code(500);
+      return newResponse;
+    }
+
+    return h.continue;
   });
 
   await server.start();
