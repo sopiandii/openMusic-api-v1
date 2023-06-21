@@ -1,4 +1,3 @@
-/* eslint-disable comma-dangle */
 /* eslint-disable import/no-extraneous-dependencies */
 const { nanoid } = require("nanoid");
 const { Pool } = require("pg");
@@ -10,9 +9,9 @@ class SongsService {
     this._pool = new Pool();
   }
 
-  async addSong({ title, year, genre, performer, duration }) {
+  async addSong({ title, year, genre, performer, duration, albumId }) {
     const id = `song-${nanoid(16)}`;
-    const albumId = `album-${nanoid(16)}`;
+    // const albumId = `album-${nanoid(16)}`;
 
     const query = {
       text: "INSERT INTO songs VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id",
@@ -25,10 +24,27 @@ class SongsService {
     return result.rows[0].id;
   }
 
-  async getSongs() {
-    const result = await this._pool.query(
-      "SELECT id, title, performer FROM songs"
-    );
+  async getSongs(title, performer) {
+    if (title && performer) {
+      const query = {
+        text: "SELECT id, title, performer FROM songs WHERE LOWER(title) LIKE '%' || LOWER($1) || '%' AND LOWER(performer) LIKE '%' || LOWER($2) || '%'",
+        values: [`%${title}`, `%${performer}`],
+      };
+      const result = await this._pool.query(query);
+      return result.rows;
+    }
+
+    if (title || performer) {
+      const query = {
+        text: "SELECT id, title, performer FROM songs WHERE LOWER(title) LIKE '%' || LOWER($1) || '%' OR LOWER(performer) LIKE '%' || LOWER($2) || '%'",
+        values: [`%${title}`, `%${performer}`],
+      };
+      const result = await this._pool.query(query);
+      return result.rows;
+    }
+
+    const query = "SELECT id, title, performer FROM songs";
+    const result = await this._pool.query(query);
     return result.rows;
   }
 
