@@ -11,7 +11,6 @@ class SongsService {
 
   async addSong({ title, year, genre, performer, duration, albumId }) {
     const id = `song-${nanoid(16)}`;
-    // const albumId = `album-${nanoid(16)}`;
 
     const query = {
       text: "INSERT INTO songs VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id",
@@ -54,7 +53,7 @@ class SongsService {
       values: [id],
     };
     const result = await this._pool.query(query);
-    if (!result.rows.length) {
+    if (!result.rowCount) {
       throw new NotFoundError("Lagu tidak ditemukan");
     }
     return result.rows[0];
@@ -66,7 +65,7 @@ class SongsService {
       values: [title, year, genre, performer, duration, albumId, id],
     };
     const result = await this._pool.query(query);
-    if (!result.rows.length) {
+    if (!result.rowCount) {
       throw new NotFoundError("Gagal memperbarui lagu. Id tidak ditemukan");
     }
   }
@@ -77,7 +76,7 @@ class SongsService {
       values: [id],
     };
     const result = await this._pool.query(query);
-    if (!result.rows.length) {
+    if (!result.rowCount) {
       throw new NotFoundError("Lagu gagal dhapus. Id tidak ditemukan");
     }
   }

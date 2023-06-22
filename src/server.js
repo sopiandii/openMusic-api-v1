@@ -1,4 +1,3 @@
-/* eslint-disable import/no-extraneous-dependencies */
 require("dotenv").config();
 
 const Hapi = require("@hapi/hapi");
@@ -6,7 +5,8 @@ const albums = require("./api/albums");
 const songs = require("./api/songs");
 const AlbumsService = require("./services/postgres/AlbumsService");
 const SongsService = require("./services/postgres/SongsService");
-const { AlbumsValidator, SongsValidator } = require("./validator/musics");
+const AlbumsValidator = require("./validator/albums");
+const SongsValidator = require("./validator/songs");
 const ClientError = require("./exceptions/ClientError");
 
 const init = async () => {
